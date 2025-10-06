@@ -159,13 +159,9 @@ onMounted(() => {
             });
         }
 
-        if (roldanaPivot && !props.isTest && props.initTest !== null){ 
+        if (roldanaPivot){ 
             roldanaPivot.rotation.x += 0.09;
         }
-        else if (roldanaPivot && props.isTest && props.initTest == true && props.rpm && props.stop == false) {
-            roldanaPivot.rotation.x += props.rpm / 8000 ;
-        }
-        else if (roldanaPivot && props.isTest && props.initTest && props.stop == true) roldanaPivot.rotation.x += 0;
 
         controls.update()
         renderer.render(scene, camera)

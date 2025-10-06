@@ -54,13 +54,14 @@
                 <v-row>
                     <v-col cols="9">
                         <ModelMachineViewer v-if="machine.object.length > 0"
-                            :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`" :danger="logLimit"
-                            :isTest="false" :stop="false"/>
+                            :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`"
+                            :danger="logLimit" :isTest="false" :stop="false" />
                     </v-col>
                     <v-col cols="3">
                         <div class="tw-flex tw-flex-col tw-gap-2">
                             <v-btn @click="openDrawerTest()" color="primary" class="tw-w-24">Testar</v-btn>
-                            <v-btn @click="openDrawerDisassemble" color="secondary" class="tw-w-24">Desmontar</v-btn>
+                            <v-btn @click="openDrawerDisassemble()" color="secondary" class="tw-w-24">Desmontar</v-btn>
+                            <v-btn @click="openInfo()" color="info" class="tw-w-24">Thread</v-btn>
                         </div>
                     </v-col>
                 </v-row>
@@ -75,8 +76,8 @@
                         <div class="tw-mt-4">
                             <div class="tw-mb-4">
                                 <ModelMachineViewer v-if="machine.object.length > 0"
-                                    :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`" :danger="danger"
-                                    :isTest="true" :initTest="initTest" :rpm="rpmTest" :stop="stop"/>
+                                    :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`"
+                                    :danger="danger" :isTest="true" :initTest="initTest" :rpm="rpmTest" :stop="stop" />
                             </div>
                             <div class="tw-flex tw-gap-2 tw-w-full">
                                 <div class="tw-w-full">
@@ -152,16 +153,44 @@
                         </v-row>
                     </v-container>
                 </div>
+                <div v-else-if="type === 'Info'">
+                    <v-container fluid>
+                        <v-row>
+                            <v-col cols="12">
+                                <v-card class="tw-p-4 tw-border tw-border-primary">
+                                    <v-card-title>
+                                        Threads Associadas
+                                    </v-card-title>
+                                    <v-card-text>
+                                        <v-data-table :items="threads" :headers="[
+                                            { title: 'ID', value: 'id' },
+                                            { title: 'Thread', value: 'name' },
+                                            { title: 'production', value: 'production' },
+                                        ]">
+                                            <template #item.production="{ item }">
+                                                {{ new Date(item.production).toLocaleDateString() }}
+                                            </template>
+                                        </v-data-table>
+                                    </v-card-text>
+                                </v-card>
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                </div>
             </v-navigation-drawer>
         </div>
         <v-snackbar v-model="danger" color="error" location="top" timeout="5000" class="tw-z-100">
-            <strong>Atenção:</strong> O valor inserido ultrapassa o limite seguro definido para esta máquina. Pode por
+            <strong>Atenção:</strong> O valor inserido ultrapassa o limite seguro
+            definido para esta
+            máquina. Pode por
             em causa
             danos ou falhas operacionais.
         </v-snackbar>
 
         <v-snackbar v-model="logLimit" color="error" location="top" timeout="10000" class="tw-z-100">
-            <strong>Atenção:</strong> A maquina encontra-se em estado de perigo. Verifique os logs para mais detalhes.
+            <strong>Atenção:</strong> A maquina encontra-se em estado de perigo.
+            Verifique os
+            logs para mais detalhes.
 
             <template v-slot:actions>
                 <v-btn icon color="white" variant="text" @click="logLimit = false">
@@ -226,8 +255,8 @@
                 <v-row>
                     <v-col cols="12">
                         <ModelMachineViewer v-if="machine.object.length > 0"
-                            :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`" :danger="logLimit"
-                            :isTest="false" :stop="false"/>
+                            :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`"
+                            :danger="logLimit" :isTest="false" :stop="false" />
                     </v-col>
                 </v-row>
                 <v-row>
@@ -250,8 +279,9 @@
                             <div class="tw-mt-4">
                                 <div class="tw-mb-4">
                                     <ModelMachineViewer v-if="machine.object.length > 0"
-                                        :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`" :danger="danger"
-                                        :isTest="true" :initTest="initTest" :rpm="rpmTest" :stop="stop"/>
+                                        :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`"
+                                        :danger="danger" :isTest="true" :initTest="initTest" :rpm="rpmTest"
+                                        :stop="stop" />
                                 </div>
                                 <div class="tw-flex tw-flex-col tw-gap-2 tw-w-full">
                                     <div class="tw-w-full">
@@ -266,11 +296,15 @@
                                             </v-card-title>
                                             <v-card-text v-if="testType === 'rotations'"
                                                 class="tw-text-sm tw-text-gray-600">
-                                                Teste de rotações por minuto (RPM). Defina a velocidade desejada e
+                                                Teste de rotações por minuto (RPM). Defina a velocidade
+                                                desejada e
                                                 inicie o
                                                 teste.
-                                                Monitore as rotações para garantir que estão dentro dos limites seguros.
-                                                Se a velocidade ultrapassar o limite, um alerta será exibido.
+                                                Monitore as rotações para garantir que estão dentro dos
+                                                limites
+                                                seguros.
+                                                Se a velocidade ultrapassar o limite, um alerta será
+                                                exibido.
 
                                                 <v-text-field flat class="tw-mt-4" v-model="rpm" type="number"
                                                     label="Nº de Rotações por Minuto - RPM"></v-text-field>
@@ -290,12 +324,17 @@
 
                                             <v-card-text v-if="testType === 'energy'"
                                                 class="tw-text-sm tw-text-gray-600">
-                                                Teste de consumo de energia. Defina o valor de energia desejado e inicie
+                                                Teste de consumo de energia. Defina o valor de energia
+                                                desejado e
+                                                inicie
                                                 o
                                                 teste.
-                                                Monitore o consumo de energia para garantir que está dentro dos limites
+                                                Monitore o consumo de energia para garantir que está
+                                                dentro dos
+                                                limites
                                                 seguros.
-                                                Se o consumo ultrapassar o limite, um alerta será exibido.
+                                                Se o consumo ultrapassar o limite, um alerta será
+                                                exibido.
 
                                                 <v-text-field flat class="tw-mt-4" v-model="energy" type="number"
                                                     label="Valor energetico que a maquina esta pronta a receber"></v-text-field>
@@ -338,7 +377,9 @@
             </v-bottom-sheet>
         </div>
         <v-snackbar v-model="danger" color="error" location="top" timeout="5000" class="tw-z-100">
-            <strong>Atenção:</strong> O valor inserido ultrapassa o limite seguro definido para esta máquina. Pode por
+            <strong>Atenção:</strong> O valor inserido ultrapassa o limite seguro definido para esta
+            máquina. Pode
+            por
             em causa
             danos ou falhas operacionais.
 
@@ -350,7 +391,9 @@
         </v-snackbar>
 
         <v-snackbar v-model="logLimit" color="error" location="top" timeout="10000" class="tw-z-100">
-            <strong>Atenção:</strong> A maquina encontra-se em estado de perigo. Verifique os logs para mais detalhes.
+            <strong>Atenção:</strong> A maquina encontra-se em estado de perigo. Verifique os logs para
+            mais
+            detalhes.
 
             <template v-slot:actions>
                 <v-btn icon color="white" variant="text" @click="logLimit = false">
@@ -371,6 +414,7 @@ import { dangerLogs } from '../Dashboard/logs';
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { useDisplay } from 'vuetify';
+import { getThreads } from '@/api/threads';
 
 const lgAndUp = useDisplay()
 
@@ -419,6 +463,8 @@ const heardersRotation = [
     { title: 'Value', value: 'value' },
     { title: 'Unity', value: 'unity' },
 ]
+
+const threads = ref<any[]>([]);
 
 const fetchMachine = async (documentID: string) => {
     isLoading.value = true;
@@ -483,6 +529,17 @@ watch(() => danger.value, (newVal) => {
     }
 });
 
+const rpmMedia = computed(() => {
+    if (logsRotation.value.length === 0) return 0;
+    const total = logsRotation.value.reduce((acc, log) => acc + log.value, 0);
+    return total / logsRotation.value.length;
+});
+
+const openInfo = () => {
+    drawer.value = true;
+    type.value = 'Info';
+}
+
 let logIndex = 0;
 let intervalId: any = null;
 
@@ -530,10 +587,26 @@ onMounted(async () => {
     startLogSimulation();
 });
 
+const fetchThreads = async () => {
+    try {
+        const query = {
+            filters: {
+                machines:[machine.value.id]
+            }
+        }
+        const response = await getThreads(query);
+        threads.value = (response.data as any).data;
+        console.log('Fetched threads:', threads.value);
+    } catch (error) {
+        console.error('Error fetching threads:', error);
+    }
+}
+
 onMounted(async () => {
     if (machineId) {
         await fetchMachine(machineId);
     }
+    await fetchThreads();
     const loader = new GLTFLoader()
     if (machine.value) {
         loader.load(`https://industrial-render-api.onrender.com${machine.value.object[0].url}`, (gltf) => {
