@@ -20,7 +20,8 @@
         </div>
         <!-- Links -->
         <v-list density="compact" nav>
-            <v-list-item v-for="item in items" :key="item.title" :to="item.to" link>
+            <v-list-item v-for="item in items" :key="item.title" :to="item.to" link
+                :active="$route.path.startsWith(item.to)">
                 <v-icon v-if="!layout.mini" :icon="item.icon" class="tw-mr-2" />
                 <v-list-item-title v-if="layout.mini" class="tw-flex tw-gap-2 tw-items-center tw-text-md"><v-icon>{{
                     item.icon
@@ -53,13 +54,14 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '@/store/auth';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useLayoutStore } from '@/store/layout'
 import ioImg from '@/components/ioImg.vue';
 
 const layout = useLayoutStore()
 const authStore = useAuthStore();
 const $router = useRouter();
+const $route = useRoute();
 
 const me = authStore.user;
 
@@ -73,5 +75,9 @@ function logout() {
 const items = [
     { title: 'Dashboard', icon: 'mdi-monitor-dashboard', to: '/dashboard' },
     { title: 'Machines', icon: 'mdi-robot-industrial', to: '/machines' },
+    { title: 'Productions', icon: 'mdi-factory', to: '/productions' },
+    { title: 'Yarns', icon: 'mdi-tshirt-crew', to: '/yarns' },
+    { title: 'Materials', icon: 'mdi-palette-swatch-variant', to: '/materials' },
+    
 ]
 </script>

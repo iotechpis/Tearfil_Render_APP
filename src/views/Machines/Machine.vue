@@ -2,7 +2,23 @@
     <v-container v-if="!isMobile" fluid class="tw-p-4">
         <div v-if="machine">
             <h2 class="tw-text-2xl tw-font-bold tw-mb-4">{{ machine.name }}</h2>
-            <div>
+            <div class="tw-mt-4">
+                <v-row>
+                    <v-col cols="9">
+                        <ModelMachineViewer v-if="machine.object.length > 0"
+                            :modelUrl="`${api_url}${machine.object[0]?.url}`" :danger="logLimit" :isTest="false"
+                            :stop="false" />
+                    </v-col>
+                    <v-col cols="3">
+                        <div class="tw-flex tw-flex-col tw-gap-2">
+                            <v-btn @click="openDrawerTest()" color="primary" class="tw-w-24">Testar</v-btn>
+                            <v-btn @click="openDrawerDisassemble()" color="secondary" class="tw-w-24">Desmontar</v-btn>
+                            <v-btn @click="openInfo()" color="info" class="tw-w-24">Productions</v-btn>
+                        </div>
+                    </v-col>
+                </v-row>
+            </div>
+            <div class="tw-mt-4">
                 <h3 class="tw-text-xl tw-font-semibold tw-mt-6">Ultimas Leituras</h3>
                 <v-row class="tw-mt-8">
                     <v-col>
@@ -50,22 +66,6 @@
                     </v-col>
                 </v-row>
             </div>
-            <div class="tw-mt-4">
-                <v-row>
-                    <v-col cols="9">
-                        <ModelMachineViewer v-if="machine.object.length > 0"
-                            :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`"
-                            :danger="logLimit" :isTest="false" :stop="false" />
-                    </v-col>
-                    <v-col cols="3">
-                        <div class="tw-flex tw-flex-col tw-gap-2">
-                            <v-btn @click="openDrawerTest()" color="primary" class="tw-w-24">Testar</v-btn>
-                            <v-btn @click="openDrawerDisassemble()" color="secondary" class="tw-w-24">Desmontar</v-btn>
-                            <v-btn @click="openInfo()" color="info" class="tw-w-24">Thread</v-btn>
-                        </div>
-                    </v-col>
-                </v-row>
-            </div>
             <v-navigation-drawer v-model="drawer" temporary location="right" width="900">
                 <div class="tw-flex tw-justify-between">
                     <v-btn @click="drawer = false" size="x-small" variant="text" icon><v-icon
@@ -76,8 +76,8 @@
                         <div class="tw-mt-4">
                             <div class="tw-mb-4">
                                 <ModelMachineViewer v-if="machine.object.length > 0"
-                                    :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`"
-                                    :danger="danger" :isTest="true" :initTest="initTest" :rpm="rpmTest" :stop="stop" />
+                                    :modelUrl="`${api_url}${machine.object[0]?.url}`" :danger="danger" :isTest="true"
+                                    :initTest="initTest" :rpm="rpmTest" :stop="stop" />
                             </div>
                             <div class="tw-flex tw-gap-2 tw-w-full">
                                 <div class="tw-w-full">
@@ -165,16 +165,27 @@
                                         <v-data-table :items="threads" :headers="[
                                             { title: 'ID', value: 'id' },
                                             { title: 'Thread', value: 'name' },
-                                            { title: 'production', value: 'production' },
+                                            { title: 'Date', value: 'production' },
+                                            { title: 'Actions', value: 'actions' },
                                         ]">
                                             <template #item.production="{ item }">
-                                                {{ new Date(item.production).toLocaleDateString() }}
+                                                {{ new Date(item.createdAt).toLocaleDateString().split('T')[0] }}
+                                            </template>
+
+                                            <template #item.actions="{ item }">
+                                                <v-btn :to="`/productions/${item.documentId}`" color="primary"
+                                                    size="small">Production</v-btn>
                                             </template>
                                         </v-data-table>
                                     </v-card-text>
                                 </v-card>
                             </v-col>
                         </v-row>
+                        <div class="tw-mt-4 tw-flex tw-justify-end">
+                            <v-btn class="tw-w-32" color="primary">
+                                Create Production
+                            </v-btn>
+                        </div>
                     </v-container>
                 </div>
             </v-navigation-drawer>
@@ -255,8 +266,8 @@
                 <v-row>
                     <v-col cols="12">
                         <ModelMachineViewer v-if="machine.object.length > 0"
-                            :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`"
-                            :danger="logLimit" :isTest="false" :stop="false" />
+                            :modelUrl="`${api_url}${machine.object[0]?.url}`" :danger="logLimit" :isTest="false"
+                            :stop="false" />
                     </v-col>
                 </v-row>
                 <v-row>
@@ -264,6 +275,7 @@
                         <div class="tw-flex tw-items-center tw-gap-2">
                             <v-btn @click="openDrawerTest()" color="primary" class="tw-w-24">Testar</v-btn>
                             <v-btn @click="openDrawerDisassemble" color="secondary" class="tw-w-24">Desmontar</v-btn>
+                            <v-btn @click="openInfo()" color="info" class="tw-w-24">Productions</v-btn>
                         </div>
                     </v-col>
                 </v-row>
@@ -279,9 +291,8 @@
                             <div class="tw-mt-4">
                                 <div class="tw-mb-4">
                                     <ModelMachineViewer v-if="machine.object.length > 0"
-                                        :modelUrl="`https://industrial-render-api.onrender.com${machine.object[0]?.url}`"
-                                        :danger="danger" :isTest="true" :initTest="initTest" :rpm="rpmTest"
-                                        :stop="stop" />
+                                        :modelUrl="`${api_url}${machine.object[0]?.url}`" :danger="danger"
+                                        :isTest="true" :initTest="initTest" :rpm="rpmTest" :stop="stop" />
                                 </div>
                                 <div class="tw-flex tw-flex-col tw-gap-2 tw-w-full">
                                     <div class="tw-w-full">
@@ -374,6 +385,40 @@
                         </v-container>
                     </div>
                 </v-card>
+                <v-card v-else-if="type === 'Info'">
+                    <div>
+                        <v-container fluid>
+                            <v-row>
+                                <v-col cols="12">
+                                    <v-card class="tw-p-4 tw-border tw-border-primary">
+                                        <v-card-title>
+                                            Threads Associadas
+                                        </v-card-title>
+                                        <v-card-text>
+                                            <v-data-table :items="threads" :headers="[
+                                                { title: 'ID', value: 'id' },
+                                                { title: 'Thread', value: 'name' },
+                                                { title: 'Date', value: 'production' },
+                                                { title: 'Actions', value: 'actions' },
+                                            ]">
+                                                <template #item.production="{ item }">
+                                                    {{ new Date(item.createdAt).toLocaleDateString().split('T')[0] }}
+                                                </template>
+
+                                                <template #item.actions="{ item }">
+                                                    <v-btn :to="`production/${item.documentId}`" color="primary"
+                                                        size="small">
+                                                        View Details
+                                                    </v-btn>
+                                                </template>
+                                            </v-data-table>
+                                        </v-card-text>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </div>
+                </v-card>
             </v-bottom-sheet>
         </div>
         <v-snackbar v-model="danger" color="error" location="top" timeout="5000" class="tw-z-100">
@@ -415,6 +460,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { useDisplay } from 'vuetify';
 import { getThreads } from '@/api/threads';
+import { split } from 'lodash';
 
 const lgAndUp = useDisplay()
 
@@ -425,6 +471,8 @@ const isMobile = computed(() => {
 
 
 const parts = ref<THREE.Object3D[]>([])
+
+const api_url = import.meta.env.VITE_API_URL
 
 console.log('Danger Logs:', dangerLogs);
 
@@ -591,7 +639,7 @@ const fetchThreads = async () => {
     try {
         const query = {
             filters: {
-                machines:[machine.value.id]
+                machines: [machine.value.id]
             }
         }
         const response = await getThreads(query);
@@ -609,7 +657,7 @@ onMounted(async () => {
     await fetchThreads();
     const loader = new GLTFLoader()
     if (machine.value) {
-        loader.load(`https://industrial-render-api.onrender.com${machine.value.object[0].url}`, (gltf) => {
+        loader.load(`${api_url}${machine.value.object[0].url}`, (gltf) => {
             const extracted: THREE.Object3D[] = []
             gltf.scene.traverse((child) => {
                 if ((child as THREE.Mesh).isMesh) {

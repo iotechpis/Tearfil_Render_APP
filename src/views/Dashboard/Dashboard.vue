@@ -7,7 +7,7 @@
                 <div class="tw-mb-4">
                     <ModelViewer :code="code" @update:code="code = $event"
                         v-if="warehouse.model3D && warehouse.model3D.length > 0"
-                        :src="`https://industrial-render-api.onrender.com${warehouse.model3D[0].url}`" :click="true" :logLimit="logLimit"
+                        :src="`${api_url}${warehouse.model3D[0].url}`" :click="true" :logLimit="logLimit"
                         :machineDanger="machinDanger" />
                 </div>
             </div>
@@ -92,8 +92,7 @@
                     <div v-if="machine">
                         <p><strong>type:</strong> {{ machine.type }}</p>
                         <ModelViewer v-if="machine.object && machine.object.length > 0" :code="code"
-                            :src="`https://industrial-render-api.onrender.com${machine.object[0].url}`" :click="false"
-                            :logLimit="logLimit" />
+                            :src="`${api_url}${machine.object[0].url}`" :click="false" :logLimit="logLimit" />
                     </div>
                     <div>
                         <v-btn color="primary" class="tw-mt-4" @click="seeDetails(machine.documentId)">See
@@ -120,7 +119,7 @@
                 <div class="tw-mb-4">
                     <ModelViewer :code="code" @update:code="code = $event"
                         v-if="warehouse.model3D && warehouse.model3D.length > 0"
-                        :src="`https://industrial-render-api.onrender.com${warehouse.model3D[0].url}`" :click="true" :logLimit="logLimit"
+                        :src="`${api_url}${warehouse.model3D[0].url}`" :click="true" :logLimit="logLimit"
                         :machineDanger="machinDanger" />
                 </div>
             </div>
@@ -195,6 +194,8 @@
                     </v-col>
                 </v-row>
             </div>
+            <div>
+            </div>
         </div>
         <v-bottom-sheet v-model="drawer" class="tw-z-50" elevation="1" height="700" :scrim="false">
             <v-card class="tw-mb-4">
@@ -207,8 +208,7 @@
                         <div v-if="machine">
                             <p><strong>type:</strong> {{ machine.type }}</p>
                             <ModelViewer v-if="machine.object && machine.object.length > 0" :code="code"
-                                :src="`https://industrial-render-api.onrender.com${machine.object[0].url}`" :click="false"
-                                :logLimit="logLimit" />
+                                :src="`${api_url}${machine.object[0].url}`" :click="false" :logLimit="logLimit" />
                         </div>
                         <div>
                             <v-btn color="primary" class="tw-mt-4" @click="seeDetails(machine.documentId)">See
@@ -244,7 +244,7 @@ import { getMachines } from '@/api/machines';
 import { useRouter } from 'vue-router';
 import { getLogs } from '@/api/logs';
 import Chart from 'chart.js/auto';
-import { useDisplay } from 'vuetify';
+import { useDisplay } from 'vuetify'; 
 
 const isLoading = ref<boolean>(false);
 const { showLoader, hideLoader } = useLoader();
@@ -259,7 +259,7 @@ const drawer = ref(false);
 
 const machine = ref<any>(null);
 
-
+const api_url = import.meta.env.VITE_API_URL
 
 const fetchMachineDetails = async (machineCode: string) => {
     showLoader();

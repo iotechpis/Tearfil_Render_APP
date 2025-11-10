@@ -5,6 +5,9 @@
         'tw-pl-20': !isMobile && layout.drawer && !layout.mini,
         'tw-pl-52': !isMobile && layout.drawer && layout.mini
     }">
+        <div v-if="showBreadcrumbs" class="tw-mb-1 tw-mt-12">
+            <Breadcrumbs />
+        </div>
         <Suspense>
             <router-view />
         </Suspense>
@@ -19,11 +22,16 @@ import { useRoute } from 'vue-router';
 import { useDisplay } from 'vuetify';
 import { useLayoutStore } from '@/store/layout'
 import BottomBar from './Layout/BottomBar.vue';
+import Breadcrumbs from './Layout/Breadcrumbs.vue';
 
 const authStore = useAuthStore();
 const me = authStore.user;
 console.log('me', me);
 const $route = useRoute();
+
+const showBreadcrumbs = computed(() => {
+    return $route.meta?.showBreadcrumbs && !isMobile.value;
+});
 
 const lgAndUp = useDisplay()
 

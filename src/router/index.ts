@@ -20,6 +20,16 @@ import Machine from '@/views/Machines/Machine.vue';
 // PROFILE
 import Profile from '@/views/Profile/Profile.vue';
 
+//PRODUCTIONS
+import Productions from '@/views/Threads/Productions.vue';
+import Production from '@/views/Threads/Production.vue';
+import SpoolDetails from '@/views/Threads/SpoolDetails.vue';
+
+//YARNS
+import Yarns from '@/views/Yarns/Yarns.vue';
+import Yarn from '@/views/Yarns/Yarn.vue';
+import Materials from '@/views/Materials/Materials.vue';
+
 const routes = [
     {
         path: '/auth',
@@ -76,6 +86,58 @@ const routes = [
                 },
             },
             {
+                path: '/productions',
+                name: 'Productions',
+                component: Productions,
+                meta: {
+                    showNavbar: true,
+                    showBreadcrumbs: true,
+                    showTopBar: true,
+                    showBottomBar: true,
+                    showFooter: true,
+                    title: 'Productions',
+                },
+            },
+            {
+                path: '/productions/:id',
+                name: 'Production',
+                component: Production,
+                meta: {
+                    showNavbar: true,
+                    showBreadcrumbs: true,
+                    showTopBar: true,
+                    showBottomBar: true,
+                    showFooter: true,
+                    title: 'Production Details',
+                },
+            },
+            {
+                path: '/productions/:id/spool-details/:spoolId',
+                name: 'SpoolDetails',
+                component: SpoolDetails,
+                meta: {
+                    showNavbar: true,
+                    showBreadcrumbs: true,
+                    showTopBar: true,
+                    showBottomBar: true,
+                    showFooter: true,
+                    title: 'Spool Details',
+                },
+            },
+            {
+                path: '/yarns',
+                name: 'Yarns',
+                component: Yarns,
+                meta: {
+                    showNavbar: true,
+                    showBreadcrumbs: true,
+                    showTopBar: true,
+                    showBottomBar: true,
+                    showFooter: true,
+                    title: 'Yarns',
+                },
+            },
+            {
                 path: '/machines',
                 name: 'Machines',
                 component: Machines,
@@ -99,6 +161,19 @@ const routes = [
                     showBottomBar: true,
                     showFooter: true,
                     title: 'Machine Details',
+                },
+            },
+            {
+                path: '/materials',
+                name: 'Materials',
+                component: Materials,
+                meta: {
+                    showNavbar: true,
+                    showBreadcrumbs: true,
+                    showTopBar: true,
+                    showBottomBar: true,
+                    showFooter: true,
+                    title: 'Materials',
                 },
             },
             {
