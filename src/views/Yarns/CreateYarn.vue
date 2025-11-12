@@ -6,11 +6,16 @@
 import * as THREE from 'three'
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 
+interface Color {
+    color: string;
+    percentage: number;
+}
+
 interface Props {
     form: {
         name: string;
         numberOfStrings: number;
-        color: string;
+        colors: Color[]; 
         twist: number;
         chaos: number;
     };
@@ -26,29 +31,22 @@ let controls: OrbitControls
 let animationId: number
 let fibersGroup: THREE.Group | null = null
 
-//no futuro se calhar props tambem
 const fiberRadius = 0.015
-const fiberLength = 19.5
+const fiberLength = 29.5
 const bundleRadius = 0.4
 
 const createFibers = () => {
-    // --- Limpa as fibras antigas ---
     if (fibersGroup) {
         scene.remove(fibersGroup)
-
-        // Limpa a memória (geometria e materiais)
         fibersGroup.children.forEach(child => {
             const mesh = child as THREE.Mesh
             if (mesh.geometry) mesh.geometry.dispose()
-            // Se o material for partilhado, só precisamos de o limpar uma vez,
-            // mas por segurança, limpamos todos.
             if (mesh.material) (mesh.material as THREE.Material).dispose()
         })
     }
 
     fibersGroup = new THREE.Group()
 
-    // --- Pega nos valores do formulário ---
     const count = props.form.numberOfStrings
     const twist = props.form.twist
     const chaos = props.form.chaos
@@ -58,13 +56,40 @@ const createFibers = () => {
         return
     }
 
+    const materiais: THREE.MeshStandardMaterial[] = [];
+    const pesosAcumulados: number[] = [];
+    let pesoAcumulado = 0.0;
 
-    const fiberColor = new THREE.Color(props.form.color || '#FFFFFF');
-    const material = new THREE.MeshStandardMaterial({
-        color: fiberColor,
-        roughness: 0.5,
-        metalness: 0.1,
-    })
+    const inputColors = props.form.colors;
+
+    if (inputColors && inputColors.length > 0) {
+        const percentagemTotal = inputColors.reduce((acc, c) => acc + (c.percentage || 0), 0);
+        
+        const usarPesosIguais = percentagemTotal === 0;
+
+        for (const cor of inputColors) {
+            const material = new THREE.MeshStandardMaterial({
+                color: new THREE.Color(cor.color || '#FFFFFF'),
+                roughness: 0.5,
+                metalness: 0.1,
+            });
+            materiais.push(material);
+
+            const peso = usarPesosIguais 
+                ? (1.0 / inputColors.length) 
+                : ((cor.percentage || 0) / percentagemTotal);
+            
+            pesoAcumulado += peso;
+            pesosAcumulados.push(pesoAcumulado);
+        }
+    } else {
+        materiais.push(new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#FFFFFF'), 
+            roughness: 0.5,
+            metalness: 0.1,
+        }));
+        pesosAcumulados.push(1.0);
+    }
 
     for (let i = 0; i < count; i++) {
         const angleOffset = Math.random() * Math.PI * 2
@@ -98,7 +123,18 @@ const createFibers = () => {
         const curve = new THREE.CatmullRomCurve3(curvePoints)
         const geometry = new THREE.TubeGeometry(curve, 200, fiberRadius, 8, false)
 
-        const mesh = new THREE.Mesh(geometry, material)
+        const rand = Math.random();
+        let materialSelecionado = materiais[materiais.length - 1]; 
+
+        for (let k = 0; k < pesosAcumulados.length; k++) {
+            if (rand < pesosAcumulados[k]) {
+                materialSelecionado = materiais[k];
+                break;
+            }
+        }
+        
+        const mesh = new THREE.Mesh(geometry, materialSelecionado);
+
         fibersGroup.add(mesh)
     }
 
@@ -114,7 +150,7 @@ const initScene = () => {
     const width = container.value.clientWidth
     const height = container.value.clientHeight
     camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 1000)
-    camera.position.set(1.5, 1.5, 1.5) // Posição inicial
+    camera.position.set(1.5, 1.5, 1.5)
 
     renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setSize(width, height)

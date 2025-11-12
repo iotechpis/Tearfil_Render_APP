@@ -6,7 +6,14 @@
 import * as THREE from 'three'
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"
 interface Props {
-    strings: Array<any>
+    strings: {
+        number: number;
+        material: string;
+        colors: {
+            code: string;
+            percentage: number;
+        }[];
+    }
 }
 
 const props = defineProps<Props>()
@@ -19,7 +26,7 @@ let controls: OrbitControls
 let animationId: number
 
 
-const fiberCount = 200
+const fiberCount = props.strings.number
 const twistTurns = 4
 const fiberRadius = 0.015
 const fiberChaos = 0.3
@@ -29,20 +36,18 @@ const bundleRadius = 0.4
 const createFibers = () => {
     const fibersGroup = new THREE.Group()
 
-    const totalPercentage = props.strings.reduce((acc, s) => acc + s.percentage, 0)
-    const normalized = props.strings.map(s => ({
+    const totalPercentage = props.strings.colors.reduce((acc, s) => acc + s.percentage, 0)
+    const normalized = props.strings.colors.map(s => ({
         color: new THREE.Color(s.code),
         weight: s.percentage / totalPercentage
     }))
 
-    // Distribui fibras proporcionalmente à porcentagem
     let colorDistribution: THREE.Color[] = []
     normalized.forEach(({ color, weight }) => {
         const count = Math.round(fiberCount * weight)
         colorDistribution.push(...Array(count).fill(color))
     })
 
-    // Garante que o número total de fibras seja exato
     while (colorDistribution.length < fiberCount) {
         colorDistribution.push(normalized[0].color)
     }

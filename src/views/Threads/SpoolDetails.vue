@@ -11,7 +11,7 @@
                     <Spools :code="''" :src="`${api_url}${spool?.spool[0].url}`" />
                 </div>
                 <div class="tw-w-1/2">
-                    <YarnModel :strings="spool.yarn.strings" />
+                    <YarnModel :strings="spool.yarn.strings[0]" />
                 </div>
             </div>
             <div class="tw-mt-4 tw-w-full">
@@ -63,14 +63,21 @@
                                 </p>
                                 <div class="tw-mt-2">
                                     <h3 class="tw-font-semibold tw-mb-1">Strings:</h3>
-                                    <div v-for="(string, index) in spool.yarn.strings" :key="index"
-                                        class="tw-flex tw-items-center tw-gap-2 tw-mb-2">
-                                        <span class="tw-h-6 tw-text-center tw-text-xs"
-                                            :style="{ backgroundColor: string.code }">{{ string.code }}</span>
-                                        <v-progress-linear color="red"
-                                            :buffer-value="string.percentage">
-                                        </v-progress-linear>
-                                        <span class="tw-w-8 tw-text-right tw-text-xs">{{ string.percentage }}%</span>
+                                    <div v-for="(yarnDef, yarnIndex) in spool.yarn.strings" :key="yarnIndex"
+                                        class="tw-mb-4 tw-border-t tw-pt-2">
+                                        <h3 class="tw-font-semibold tw-mb-1">
+                                            Yarn Definition {{ yarnIndex + 1 }} ({{ yarnDef.number }} strings)
+                                        </h3>
+
+                                        <div v-for="(colorItem, index) in yarnDef.colors" :key="index"
+                                            class="tw-flex tw-items-center tw-gap-2 tw-mb-2">
+                                            <span class="tw-h-6 tw-text-center tw-text-xs"
+                                                :style="{ backgroundColor: colorItem.code }">{{ colorItem.code }}</span>
+                                            <v-progress-linear color="red" :buffer-value="colorItem.percentage">
+                                            </v-progress-linear>
+                                            <span class="tw-w-8 tw-text-right tw-text-xs">{{ colorItem.percentage
+                                                }}%</span>
+                                        </div>
                                     </div>
                                 </div>
                             </v-card-text>
@@ -79,7 +86,7 @@
                 </div>
             </div>
             <div class="tw-mt-4 tw-flex tw-justify-end">
-                <v-btn @click="drawer=true" class="tw-w-32" color="primary">
+                <v-btn @click="drawer = true" class="tw-w-32" color="primary">
                     Render
                 </v-btn>
             </div>
@@ -89,10 +96,6 @@
                 <v-btn icon @click="drawer = false">
                     <v-icon>mdi-close</v-icon>
                 </v-btn>
-            </div>
-            <div class="tw-p-4">
-                <h2 class="tw-text-xl tw-font-semibold">3D Spool Render</h2>
-                <RenderSpool3DCone v-if="spool" :strings="spool.yarn.strings" />
             </div>
         </v-navigation-drawer>
     </v-container>
@@ -105,7 +108,6 @@ import { useLoader } from '@/composables/useLoader';
 import { getSpool } from '@/api/spools';
 import Spools from './Spools.vue';
 import YarnModel from '../Yarns/YarnModel.vue';
-import RenderSpool3DCone from './RenderSpool3DCone.vue';
 
 const drawer = ref(false);
 const api_url = import.meta.env.VITE_API_URL;
@@ -127,7 +129,7 @@ const fetchSpool = async (spoolId: string) => {
     showLoader();
     try {
         const query = {
-            populate: ['thread', 'spool', 'yarn.strings']
+            populate: ['thread', 'spool', 'yarn.strings.colors']
         }
         const response = await getSpool(spoolId, query);
         console.log('Spool data:', response.data);
