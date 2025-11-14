@@ -11,7 +11,7 @@
                     <Spools :code="''" :src="`${api_url}${spool?.spool[0].url}`" />
                 </div>
                 <div class="tw-w-1/2">
-                    <YarnModel :strings="spool.yarn.strings[0]" />
+                    <YarnModel :twist="spool.yarn.twist" :chaos="spool.yarn.chaos" :strings="spool.yarn.strings[0]" />
                 </div>
             </div>
             <div class="tw-mt-4 tw-w-full">

@@ -14,6 +14,9 @@ interface Props {
             percentage: number;
         }[];
     }
+
+    twist: number;
+    chaos: number;
 }
 
 const props = defineProps<Props>()
@@ -27,9 +30,9 @@ let animationId: number
 
 
 const fiberCount = props.strings.number
-const twistTurns = 4
+const twistTurns = props.twist
 const fiberRadius = 0.015
-const fiberChaos = 0.3
+const fiberChaos = props.chaos
 const fiberLength = 19.5 // total length (m) of the fiber divided by 1000
 const bundleRadius = 0.4
 

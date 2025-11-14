@@ -32,7 +32,7 @@ let animationId: number
 let fibersGroup: THREE.Group | null = null
 
 const fiberRadius = 0.015
-const fiberLength = 29.5
+const fiberLength = 160
 const bundleRadius = 0.4
 
 const createFibers = () => {
@@ -161,7 +161,7 @@ const initScene = () => {
     controls.enableDamping = true
     controls.dampingFactor = 0.05
     controls.minDistance = 0.5
-    controls.maxDistance = 10
+    controls.maxDistance = 125
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
     scene.add(ambientLight)

@@ -17,11 +17,11 @@
         </div>
         <div class="tw-p-2" v-if="type === 'single'">
             <div class="tw-flex tw-justify-end">
-                <v-btn color="primary" size="small" @click="showForm = true">
+                <v-btn color="primary" size="small" @click="handleCreateNew">
                     Create New Yarn
                 </v-btn>
             </div>
-            <v-data-table :items="yarns" :headers="[
+            <v-data-table :items="yarns" :headers-props="{ class: 'tw-bg-secondary' }" :headers="[
                 { title: 'ID', value: 'id' },
                 { title: 'Yarn Name', value: 'name' },
                 { title: 'Date', value: 'createdAt' },
@@ -33,7 +33,8 @@
                 </template>
 
                 <template #item.actions="{ item }">
-                    <v-btn color="primary" size="small"><v-icon>mdi-eye</v-icon></v-btn>
+                    <v-btn color="primary" size="small"
+                        @click="handleViewItem(item, 'single')"><v-icon>mdi-eye</v-icon></v-btn>
                 </template>
 
                 <template #item.production="{ item }">
@@ -43,12 +44,12 @@
         </div>
         <div class="tw-p-2" v-else-if="type === 'compose'">
             <div class="tw-flex tw-justify-end">
-                <v-btn color="primary" size="small" @click="showForm = true">
+                <v-btn color="primary" size="small" @click="handleCreateNew">
                     Create New Yarn
                 </v-btn>
             </div>
 
-            <v-data-table-server :headers="[
+            <v-data-table-server :headers-props="{ class: 'tw-bg-secondary-100' }" :headers="[
                 { title: 'ID', value: 'id' },
                 { title: 'Composition Name', value: 'name' },
                 { title: 'Date', value: 'createdAt' },
@@ -61,12 +62,13 @@
                 </template>
 
                 <template #item.actions="{ item }">
-                    <v-btn color="primary" size="small"><v-icon>mdi-eye</v-icon></v-btn>
+                    <v-btn color="primary" size="small"
+                        @click="handleViewItem(item, 'single')"><v-icon>mdi-eye</v-icon></v-btn>
                 </template>
 
                 <template #expanded-row="{ columns, item }">
                     <td :colspan="columns.length">
-                        <v-data-table :items="item.yarns" :headers="[
+                        <v-data-table :items="item.yarns" :headers-props="{ class: 'tw-bg-primary-100' }" :headers="[
                             { title: 'ID', value: 'id' },
                             { title: 'Yarn Name', value: 'name' },
                             { title: 'Date', value: 'createdAt' },
@@ -77,7 +79,8 @@
                             </template>
 
                             <template #item.actions="{ item }">
-                                <v-btn color="primary" size="small"><v-icon>mdi-eye</v-icon></v-btn>
+                                <v-btn color="primary" size="small"
+                                    @click="handleViewItem(item, 'single')"><v-icon>mdi-eye</v-icon></v-btn>
                             </template>
                         </v-data-table>
                     </td>
@@ -87,7 +90,8 @@
         </div>
     </v-container>
     <div v-if="showForm">
-        <YarnModelForm :type="type" :showForm="showForm" @update:showForm="showForm = $event" />
+        <YarnModelForm :type="formType" :showForm="showForm" @update:showForm="showForm = $event"
+            :initialData="selectedItem" :isViewOnly="isViewOnly" />
     </div>
 </template>
 
@@ -106,6 +110,10 @@ const type = ref<'single' | 'compose'>('single');
 
 const expandedItems = ref<Array<string>>([]);
 
+const selectedItem = ref<Yarn | ComposeFabric | null>(null);
+const isViewOnly = ref(false);
+const formType = ref<'single' | 'compose'>('single');
+
 interface Yarn {
     id: string;
     name: string;
@@ -116,6 +124,10 @@ interface Yarn {
             name: string;
         };
     };
+    numberOfStrings?: number;
+    colors?: { color: string; percentage: number }[];
+    twist?: number;
+    chaos?: number;
 }
 
 interface ComposeFabric {
@@ -133,7 +145,7 @@ const fetchComposeFabrics = async () => {
     showLoader();
     try {
         const query = {
-            populate: ['yarns.strings']
+            populate: ['yarns.strings.colors']
         }
         const response = await getComposeFabrics(query);
         composeFabrics.value = (response.data as any).data;
@@ -150,7 +162,7 @@ const fetchYarns = async () => {
     showLoader();
     try {
         const query = {
-            populate: ['strings', 'spool.thread']
+            populate: ['strings.colors', 'spool.thread']
         }
         const response = await getYarns(query);
         yarns.value = (response.data as any).data;
@@ -161,6 +173,27 @@ const fetchYarns = async () => {
         hideLoader();
     }
 }
+
+const handleCreateNew = () => {
+    selectedItem.value = null;
+    isViewOnly.value = false;
+    formType.value = type.value;
+    showForm.value = true;
+};
+
+const handleViewItem = (item: Yarn | ComposeFabric, itemType: 'single' | 'compose') => {
+    selectedItem.value = item;
+    isViewOnly.value = true;
+    formType.value = itemType;
+    showForm.value = true;
+};
+
+watch(showForm, (isShowing) => {
+    if (!isShowing) {
+        selectedItem.value = null;
+        isViewOnly.value = false;
+    }
+});
 
 const init = async () => {
     isLoading.value = true;

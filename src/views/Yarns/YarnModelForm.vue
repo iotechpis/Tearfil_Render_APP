@@ -5,15 +5,43 @@
                 Create New Yarn
             </h2>
             <div class="tw-flex tw-gap-4">
+                <v-btn v-if="possibleToSave && !props.isViewOnly" color="primary" size="small" @click="handleSaveClick"
+                    :loading="isLoadingSave">
+                    Save
+                </v-btn>
                 <v-btn color="primary" size="small" @click="close">
                     Close
                 </v-btn>
             </div>
         </div>
+        <v-dialog v-model="showThreadModal" max-width="500" persistent>
+            <v-card :loading="isLoadingSave">
+                <v-card-title>Select Thread</v-card-title>
+                <v-card-text>
+                    <p class="tw-mb-4">A new spool will be created for this yarn. Please select which thread to
+                        associate it with.</p>
+                    <v-select v-model="selectedThread" :items="threads" item-title="name" item-value="id"
+                        label="Available Threads" density="compact" hide-details></v-select>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="showThreadModal = false" :disabled="isLoadingSave">
+                        Cancel
+                    </v-btn>
+                    <v-btn color="primary" @click="confirmThreadSelection" :disabled="!selectedThread || isLoadingSave">
+                        Confirm and Save
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
         <div class="tw-flex tw-mt-1 tw-gap-4 tw-h-full">
             <div class="tw-w-1/3 tw-bg-primary-100 tw-p-4 tw-rounded-lg tw-overflow-y-auto">
                 <v-form class="tw-flex tw-flex-col tw-gap-2">
                     <h2>{{ type == 'single' ? 'Single Yarn' : 'Compose Yarns' }}</h2>
+
+                    <v-text-field v-if="type == 'compose'" v-model="composeFabricName" label="Composition Name" required
+                        density="compact" class="tw-mb-2" hide-details></v-text-field>
+
                     <v-text-field v-model="form.name" label="Yarn Name" required></v-text-field>
                     <v-text-field v-model="form.numberOfStrings" type="number" label="Number of strings"></v-text-field>
 
@@ -106,18 +134,37 @@
 <script lang="ts" setup>
 import CreateYarn from './CreateYarn.vue';
 import CompositeYarn from './CompositeYarn.vue';
+import { createColor } from '@/api/colors';
+import { createString } from '@/api/strings';
+import { createYarn } from '@/api/yarns';
+import { createSpool } from '@/api/spools';
+import { getThreads } from '@/api/threads';
+import { useLoader } from '@/composables/useLoader';
+import { createComposeFabric } from '@/api/compose-fabrics';
+
+const isLoadingSave = ref<boolean>(false);
+const { showLoader, hideLoader } = useLoader();
 
 interface Props {
     showForm: boolean;
-    type?: 'single' | 'compose';
+    type: 'single' | 'compose';
+    initialData: any;
+    isViewOnly: boolean;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits(['update:showForm']);
 
-const showNewYarn = ref<boolean>(false);
+const showThreadModal = ref<boolean>(false);
+const threads = ref<any[]>([]);
+const selectedThread = ref<string | null>(null);
 
-interface Cor {
+const showNewYarn = ref<boolean>(false);
+const possibleToSave = ref<boolean>(false);
+
+const composeFabricName = ref<string>('');
+
+interface Color {
     color: string;
     percentage: number;
 }
@@ -125,7 +172,7 @@ interface Cor {
 interface YarnFormData {
     name: string;
     numberOfStrings: number;
-    colors: Cor[]; 
+    colors: Color[];
     twist: number;
     chaos: number;
 }
@@ -133,7 +180,7 @@ interface YarnFormData {
 const form = ref<YarnFormData>({
     name: '',
     numberOfStrings: 0,
-    colors: [],  
+    colors: [],
     twist: 0,
     chaos: 0,
 })
@@ -182,12 +229,15 @@ const validateForm = () => {
         }
     }
     return true;
-};  
+};
 
 const applyChanges = () => {
-    validateForm();
+    if (!validateForm()) {
+        return;
+    }
     showNewYarn.value = true;
     previewForm.value = { ...form.value };
+    possibleToSave.value = true;
 };
 
 const type = ref<string>(props.type || 'single');
@@ -202,11 +252,12 @@ const addYarnToFabrics = () => {
     form.value = {
         name: '',
         numberOfStrings: 0,
-        colors: [],      
+        colors: [],
         twist: 0,
         chaos: 0,
     };
     showNewYarn.value = false;
+    possibleToSave.value = false;
 };
 
 // @ts-ignore
@@ -241,13 +292,200 @@ const validateFabrics = () => {
 };
 
 const compose = () => {
-    validateFabrics();
+    if (!validateFabrics()) {
+        return;
+    }
     showNewYarn.value = false;
     fabricsCompose.value = true;
     previewFabricsForm.value = [...fabrics.value];
+    possibleToSave.value = true;
 }
 
+const fetchThreads = async () => {
+    isLoadingSave.value = true;
+    showLoader();
+    try {
+        const query = {};
+        const response = await getThreads(query);
+        threads.value = (response.data as any).data;
+    } catch (error) {
+        console.error('Error fetching threads:', error);
+        alert('Could not load threads. Please try again.');
+    } finally {
+        isLoadingSave.value = false;
+        hideLoader();
+    }
+};
+
+const handleSaveClick = async () => {
+    if (!possibleToSave.value) {
+        alert('Please apply changes before saving.');
+        return;
+    }
+    if (type.value === 'compose') {
+        if (!composeFabricName.value) {
+            alert('Please provide a Composition Name.');
+            return;
+        }
+        if (previewFabricsForm.value.length === 0) {
+            alert('Please add yarns and click "Apply Changes" before saving.');
+            return;
+        }
+    }
+    if (threads.value.length === 0) {
+        await fetchThreads();
+    }
+    if (threads.value.length > 0) {
+        showThreadModal.value = true;
+    }
+};
+
+const confirmThreadSelection = () => {
+    if (!selectedThread.value) {
+        alert('Please select a thread.');
+        return;
+    }
+    showThreadModal.value = false;
+    executeSave(selectedThread.value);
+    selectedThread.value = null;
+};
+
+const executeSave = async (threadId: string | null) => {
+    if (type.value === 'single') {
+        if (!threadId) {
+            alert('A thread ID is required to save a single yarn.');
+            return;
+        }
+
+        isLoadingSave.value = true;
+        showLoader();
+
+        try {
+            const formToSave = previewForm.value;
+            const stringData = {
+                number: formToSave.numberOfStrings,
+            };
+            const stringResponse = await createString({ ...stringData });
+            const stringId = stringResponse.data.data.id;
+
+            const colorPromises = formToSave.colors.map(cor => {
+                return createColor({
+                    code: cor.color,
+                    percentage: cor.percentage,
+                    string: stringId
+                });
+            });
+            await Promise.all(colorPromises);
+
+            const yarnData = {
+                name: formToSave.name,
+                twist: formToSave.twist,
+                chaos: formToSave.chaos,
+                strings: [stringId]
+            };
+            const yarnResponse = await createYarn({ ...yarnData });
+            const yarnId = yarnResponse.data.data.id;
+
+
+            const spoolData = {
+                name: `${formToSave.name} Spool`,
+                yarn: yarnId,
+                thread: threadId
+            };
+            await createSpool({ ...spoolData });
+
+            alert('Yarn saved successfully!');
+            close();
+        } catch (error) {
+            console.error('Error saving yarn:', error);
+            alert('An error occurred while saving. Please check the console.');
+        } finally {
+            isLoadingSave.value = false;
+            hideLoader();
+        }
+    } else {
+        try {
+            const yarnsToCreate = previewFabricsForm.value;
+            const createdYarnIds: string[] = [];
+
+            for (const yarnForm of yarnsToCreate) {
+                const stringResponse = await createString({
+                    number: yarnForm.numberOfStrings,
+                });
+                const stringId = stringResponse.data.data.id;
+
+                const colorPromises = yarnForm.colors.map(cor => createColor({
+                    code: cor.color, 
+                    percentage: cor.percentage, 
+                    string: stringId
+                }));
+                await Promise.all(colorPromises);
+
+                const yarnResponse = await createYarn({
+                        name: yarnForm.name,
+                        twist: yarnForm.twist,
+                        chaos: yarnForm.chaos,
+                        strings: [stringId]
+                });
+                const yarnId = yarnResponse.data.data.id;
+
+                await createSpool({
+                        name: `${yarnForm.name} Spool`,
+                        yarn: yarnId,
+                        thread: threadId
+                });
+
+                createdYarnIds.push(yarnId);
+            }
+
+            const composeFabricData = {
+                name: composeFabricName.value,
+                yarns: createdYarnIds 
+            };
+            await createComposeFabric({ ...composeFabricData });
+
+            alert('Compose Fabric saved successfully!');
+            close();
+
+        } catch (error) {
+            console.error('Error saving compose fabric:', error);
+            alert('An error occurred while saving the compose fabric.');
+        } finally {
+            isLoadingSave.value = false;
+            hideLoader();
+        }
+    }
+};
+
 const localShowForm = ref<boolean>(props.showForm);
+
+watch(() => props.initialData, (newData) => {
+    if (newData) {
+        if (props.type === 'single') {
+            form.value = {
+                name: newData.name || '',
+                numberOfStrings: newData.numberOfStrings || 0,
+                colors: newData.colors ? newData.colors.map((c: any) => ({
+                    color: c.color,
+                    percentage: c.percentage
+                })) : [],
+                twist: newData.twist || 0,
+                chaos: newData.chaos || 0,
+            };
+        } else if (props.type === 'compose') {
+            fabrics.value = newData.yarns ? newData.yarns.map((yarn: any) => ({
+                name: yarn.name || '',
+                numberOfStrings: yarn.numberOfStrings || 0,
+                colors: yarn.colors ? yarn.colors.map((c: any) => ({
+                    color: c.color,
+                    percentage: c.percentage
+                })) : [],
+                twist: yarn.twist || 0,
+                chaos: yarn.chaos || 0,
+            })) : [];
+        }
+    }
+}, { immediate: true });
 
 watch(() => props.showForm, (newShowFrom) => {
     localShowForm.value = newShowFrom;

@@ -27,9 +27,6 @@
                     <v-btn color="primary" size="small"><v-icon>mdi-eye</v-icon></v-btn>
                 </template>
             </v-data-table>
-            <div class="tw-mt-8">
-                <DeterministicMaterialViewer :fabrics="myFabrics" :percentages="myPercentages" :palette="myPalette" />
-            </div>
 
         </div>
     </v-container>
@@ -42,20 +39,7 @@
 import { getMaterials } from '@/api/materials';
 import { useLoader } from '@/composables/useLoader';
 import CreateMaterial from './CreateMaterial.vue';
-import DeterministicMaterialViewer from './DeterministicMaterialViewer.vue';
 
-const myFabrics = ref([
-    { name: 'Feixe 1', numberOfStrings: 50, color: '#FF0000', twist: 2, chaos: 0.2 },
-    { name: 'Feixe 2', numberOfStrings: 50, color: '#0000FF', twist: 2, chaos: 0.2 }
-]);
-
-// Dados para a textura determinística
-const myPercentages = ref([30, 40, 30]);
-const myPalette = ref([
-    [1.0, 0.0, 0.0], // Vermelho
-    [0.0, 0.0, 1.0], // Azul
-    [0.0, 1.0, 0.0]  // Verde
-]);
 
 const isLoading = ref(false);
 const { showLoader, hideLoader } = useLoader();

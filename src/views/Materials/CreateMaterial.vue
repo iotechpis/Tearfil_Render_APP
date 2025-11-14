@@ -1,7 +1,7 @@
 <template>
-    <div class="tw-flex tw-items-center tw-justify-between">
+    <div class="tw-p-4 tw-flex tw-items-center tw-justify-between">
         <div class="tw-text-2xl tw-font-semibold">
-            Create a New Favric/Material
+            Create a New Fabric/Material
         </div>
         <div class="tw-flex tw-gap-4">
             <v-btn color="primary" size="small" @click="close">
@@ -9,31 +9,25 @@
             </v-btn>
         </div>
     </div>
-    <div class="tw-mt-4 tw-w-96 tw-h-96 tw-border tw-border-gray-300 ">
-        <DeterministicMaterialViewer :fabrics="myFabrics" :percentages="myPercentages" :palette="myPalette" />
+    <div class="tw-flex tw-gap-4 tw-h-full">
+        <div class="tw-w-1/3 tw-bg-primary-100 tw-p-4 tw-rounded-lg tw-overflow-y-auto">
+            <label class="tw-block tw-mb-2 tw-font-semibold" for="material-name">Import a Yarn</label>
+            <v-select outlined flat label="Yarn" placeholder="Import a Yarn"></v-select>
+        </div>
+
+        <div class="tw-flex-1 tw-bg-white tw-rounded-lg tw-p-4">
+
+        </div>
+
     </div>
 
 </template>
 
 <script lang="ts" setup>
-import DeterministicMaterialViewer from './DeterministicMaterialViewer.vue';
-
 interface Props {
     showForm: boolean;
 }
 
-const myFabrics = ref([
-    { name: 'Feixe 1', numberOfStrings: 50, color: '#FF0000', twist: 2, chaos: 0.2 },
-    { name: 'Feixe 2', numberOfStrings: 50, color: '#0000FF', twist: 2, chaos: 0.2 }
-]);
-
-// Dados para a textura determinística
-const myPercentages = ref([30, 40, 30]);
-const myPalette = ref([
-    [1.0, 0.0, 0.0], // Vermelho
-    [0.0, 0.0, 1.0], // Azul
-    [0.0, 1.0, 0.0]  // Verde
-]);
 
 const props = defineProps<Props>();
 const emit = defineEmits(['update:showForm']);

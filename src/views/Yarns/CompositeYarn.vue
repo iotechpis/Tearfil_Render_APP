@@ -34,7 +34,7 @@ let compositeGroup: THREE.Group | null = null
 let materials: THREE.MeshStandardMaterial[] = [];
 
 const fiberRadius = 0.015
-const fiberLength = 19.5
+const fiberLength = 160
 const yarnBundleRadius = 0.3
 
 const compositeTwistTurns = 2
@@ -203,7 +203,7 @@ const initScene = () => {
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.minDistance = 0.5;
-    controls.maxDistance = 20;
+    controls.maxDistance = 125;
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
