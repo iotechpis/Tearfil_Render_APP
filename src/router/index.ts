@@ -27,7 +27,6 @@ import SpoolDetails from '@/views/Threads/SpoolDetails.vue';
 
 //YARNS
 import Yarns from '@/views/Yarns/Yarns.vue';
-import Yarn from '@/views/Yarns/Yarn.vue';
 import Materials from '@/views/Materials/Materials.vue';
 
 const routes = [

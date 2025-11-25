@@ -12,10 +12,11 @@ interface Color {
 }
 
 interface Props {
+    showCard?: boolean;
     form: {
         name: string;
         numberOfStrings: number;
-        colors: Color[]; 
+        colors: Color[];
         twist: number;
         chaos: number;
     };
@@ -34,6 +35,8 @@ let fibersGroup: THREE.Group | null = null
 const fiberRadius = 0.015
 const fiberLength = 160
 const bundleRadius = 0.4
+
+const cardSpacing = 2.0
 
 const createFibers = () => {
     if (fibersGroup) {
@@ -64,7 +67,7 @@ const createFibers = () => {
 
     if (inputColors && inputColors.length > 0) {
         const percentagemTotal = inputColors.reduce((acc, c) => acc + (c.percentage || 0), 0);
-        
+
         const usarPesosIguais = percentagemTotal === 0;
 
         for (const cor of inputColors) {
@@ -75,67 +78,79 @@ const createFibers = () => {
             });
             materiais.push(material);
 
-            const peso = usarPesosIguais 
-                ? (1.0 / inputColors.length) 
+            const peso = usarPesosIguais
+                ? (1.0 / inputColors.length)
                 : ((cor.percentage || 0) / percentagemTotal);
-            
+
             pesoAcumulado += peso;
             pesosAcumulados.push(pesoAcumulado);
         }
     } else {
         materiais.push(new THREE.MeshStandardMaterial({
-            color: new THREE.Color('#FFFFFF'), 
+            color: new THREE.Color('#FFFFFF'),
             roughness: 0.5,
             metalness: 0.1,
         }));
         pesosAcumulados.push(1.0);
     }
 
-    for (let i = 0; i < count; i++) {
-        const angleOffset = Math.random() * Math.PI * 2
-        const radialOffset = bundleRadius * Math.sqrt(Math.random())
+    const numRows = props.showCard ? 7 : 1;
 
-        const offset = new THREE.Vector3(
-            0,
-            radialOffset * Math.cos(angleOffset),
-            radialOffset * Math.sin(angleOffset)
-        )
-
-        const curvePoints: THREE.Vector3[] = []
-        const segments = 200
-        for (let j = 0; j <= segments; j++) {
-            const t = j / segments
-            const x = (t - 0.5) * fiberLength
-
-            const twistAngle = t * twist * Math.PI * 2
-
-            const rotatedOffset = new THREE.Vector3()
-            rotatedOffset.y = offset.y * Math.cos(twistAngle) - offset.z * Math.sin(twistAngle)
-            rotatedOffset.z = offset.y * Math.sin(twistAngle) + offset.z * Math.cos(twistAngle)
-            rotatedOffset.x = x
-
-            rotatedOffset.y += (Math.random() - 0.5) * chaos * 0.05
-            rotatedOffset.z += (Math.random() - 0.5) * chaos * 0.05
-
-            curvePoints.push(rotatedOffset)
+    for (let row = 0; row < numRows; row++) {
+        let yOffset = 0;
+        if (numRows > 1) {
+            const centerIndex = (numRows - 1) / 2;
+            yOffset = (row - centerIndex) * cardSpacing;
         }
 
-        const curve = new THREE.CatmullRomCurve3(curvePoints)
-        const geometry = new THREE.TubeGeometry(curve, 200, fiberRadius, 8, false)
+        for (let i = 0; i < count; i++) {
+            const angleOffset = Math.random() * Math.PI * 2
+            const radialOffset = bundleRadius * Math.sqrt(Math.random())
 
-        const rand = Math.random();
-        let materialSelecionado = materiais[materiais.length - 1]; 
+            const offset = new THREE.Vector3(
+                0,
+                radialOffset * Math.cos(angleOffset),
+                radialOffset * Math.sin(angleOffset)
+            )
 
-        for (let k = 0; k < pesosAcumulados.length; k++) {
-            if (rand < pesosAcumulados[k]) {
-                materialSelecionado = materiais[k];
-                break;
+            const curvePoints: THREE.Vector3[] = []
+            const segments = 200
+            for (let j = 0; j <= segments; j++) {
+                const t = j / segments
+                const x = (t - 0.5) * fiberLength
+
+                const twistAngle = t * twist * Math.PI * 2
+
+                const rotatedOffset = new THREE.Vector3()
+                rotatedOffset.y = offset.y * Math.cos(twistAngle) - offset.z * Math.sin(twistAngle)
+                rotatedOffset.z = offset.y * Math.sin(twistAngle) + offset.z * Math.cos(twistAngle)
+                rotatedOffset.x = x
+
+                rotatedOffset.y += (Math.random() - 0.5) * chaos * 0.05
+                rotatedOffset.z += (Math.random() - 0.5) * chaos * 0.05
+
+                rotatedOffset.y += yOffset
+
+                curvePoints.push(rotatedOffset)
             }
-        }
-        
-        const mesh = new THREE.Mesh(geometry, materialSelecionado);
 
-        fibersGroup.add(mesh)
+            const curve = new THREE.CatmullRomCurve3(curvePoints)
+            const geometry = new THREE.TubeGeometry(curve, 200, fiberRadius, 8, false)
+
+            const rand = Math.random();
+            let materialSelecionado = materiais[materiais.length - 1];
+
+            for (let k = 0; k < pesosAcumulados.length; k++) {
+                if (rand < pesosAcumulados[k]) {
+                    materialSelecionado = materiais[k];
+                    break;
+                }
+            }
+
+            const mesh = new THREE.Mesh(geometry, materialSelecionado);
+
+            fibersGroup.add(mesh)
+        }
     }
 
     scene.add(fibersGroup)
@@ -150,7 +165,7 @@ const initScene = () => {
     const width = container.value.clientWidth
     const height = container.value.clientHeight
     camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 1000)
-    camera.position.set(1.5, 1.5, 1.5)
+    camera.position.set(0.228, -9.949, 34.064)
 
     renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setSize(width, height)
@@ -178,8 +193,18 @@ const initScene = () => {
 }
 
 onMounted(() => {
-    initScene()     
-    createFibers()  
+    initScene()
+    createFibers()
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'p' || e.key === 'P') {
+            console.log('📸 CÂMERA CAPTURADA:')
+            console.log(`camera.position.set(${camera.position.x.toFixed(3)}, ${camera.position.y.toFixed(3)}, ${camera.position.z.toFixed(3)})`)
+
+            // Se precisares também do alvo para onde ela olha (caso tenhas mudado o target do controls)
+            console.log(`controls.target.set(${controls.target.x.toFixed(3)}, ${controls.target.y.toFixed(3)}, ${controls.target.z.toFixed(3)})`)
+        }
+    })
 })
 
 onUnmounted(() => {
@@ -198,12 +223,12 @@ onUnmounted(() => {
     }
 })
 
-watch(() => props.form, () => {
-    if (scene) { 
+watch([() => props.form, () => props.showCard], () => {
+    if (scene) {
         createFibers()
     }
 }, {
-    deep: true 
+    deep: true
 })
 
 </script>

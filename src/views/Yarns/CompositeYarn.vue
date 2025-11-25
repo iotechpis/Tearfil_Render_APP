@@ -21,6 +21,7 @@ interface YarnFormData {
 }
 interface Props {
     fabrics: YarnFormData[];
+    compositeTwist: number;
 }
 const props = defineProps<Props>();
 
@@ -37,7 +38,7 @@ const fiberRadius = 0.015
 const fiberLength = 160
 const yarnBundleRadius = 0.3
 
-const compositeTwistTurns = 2
+const compositeTwistTurns = props.compositeTwist;
 
 const createCompositeYarn = () => {
 

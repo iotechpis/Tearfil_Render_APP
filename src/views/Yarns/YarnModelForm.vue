@@ -42,6 +42,23 @@
                     <v-text-field v-if="type == 'compose'" v-model="composeFabricName" label="Composition Name" required
                         density="compact" class="tw-mb-2" hide-details></v-text-field>
 
+                    <v-text-field v-if="type == 'compose'" v-model="composeFabricTwist" label="Composition Twist" required
+                        density="compact" class="tw-mb-2" hide-details></v-text-field>
+
+                    <v-divider v-if="type == 'compose'" class="tw-mt-1 tw-mb-1"></v-divider>
+
+                    <div v-if="type == 'compose'" class="tw-mt-1 tw-mb-1">
+                        <span>
+                            Yarns Added
+                        </span>
+                        <div v-for="(yarn, index) in fabrics" :key="index" class="tw-flex tw-justify-between tw-items-center tw-mt-1 tw-p-2 tw-bg-white tw-rounded">
+                            <span>{{ yarn.name }}</span>
+                            <v-btn icon="mdi-delete" variant="text" size="x-small" @click="fabrics.splice(index, 1)"></v-btn>
+                        </div>
+                    </div>
+
+                    <v-divider v-if="type == 'compose'" class="tw-mt-1 tw-mb-1"></v-divider>
+
                     <v-text-field v-model="form.name" label="Yarn Name" required></v-text-field>
                     <v-text-field v-model="form.numberOfStrings" type="number" label="Number of strings"></v-text-field>
 
@@ -125,7 +142,7 @@
                     <div v-for="(yarn, index) in previewFabricsForm" :key="index" class="">
                         {{ yarn.name }} {{ index < previewFabricsForm.length - 1 ? ',' : '' }} </div>
                     </div>
-                    <CompositeYarn :fabrics="previewFabricsForm" />
+                    <CompositeYarn :fabrics="previewFabricsForm" :compositeTwist="composeFabricTwist" />
                 </div>
             </div>
     </v-container>
@@ -163,6 +180,7 @@ const showNewYarn = ref<boolean>(false);
 const possibleToSave = ref<boolean>(false);
 
 const composeFabricName = ref<string>('');
+const composeFabricTwist = ref<number>(0);
 
 interface Color {
     color: string;
@@ -292,6 +310,9 @@ const validateFabrics = () => {
 };
 
 const compose = () => {
+
+    console.log('Fabrics to compose:', fabrics.value);
+
     if (!validateFabrics()) {
         return;
     }
@@ -415,24 +436,24 @@ const executeSave = async (threadId: string | null) => {
                 const stringId = stringResponse.data.data.id;
 
                 const colorPromises = yarnForm.colors.map(cor => createColor({
-                    code: cor.color, 
-                    percentage: cor.percentage, 
+                    code: cor.color,
+                    percentage: cor.percentage,
                     string: stringId
                 }));
                 await Promise.all(colorPromises);
 
                 const yarnResponse = await createYarn({
-                        name: yarnForm.name,
-                        twist: yarnForm.twist,
-                        chaos: yarnForm.chaos,
-                        strings: [stringId]
+                    name: yarnForm.name,
+                    twist: yarnForm.twist,
+                    chaos: yarnForm.chaos,
+                    strings: [stringId]
                 });
                 const yarnId = yarnResponse.data.data.id;
 
                 await createSpool({
-                        name: `${yarnForm.name} Spool`,
-                        yarn: yarnId,
-                        thread: threadId
+                    name: `${yarnForm.name} Spool`,
+                    yarn: yarnId,
+                    thread: threadId
                 });
 
                 createdYarnIds.push(yarnId);
@@ -440,7 +461,8 @@ const executeSave = async (threadId: string | null) => {
 
             const composeFabricData = {
                 name: composeFabricName.value,
-                yarns: createdYarnIds 
+                twist: composeFabricTwist.value,
+                yarns: createdYarnIds
             };
             await createComposeFabric({ ...composeFabricData });
 
