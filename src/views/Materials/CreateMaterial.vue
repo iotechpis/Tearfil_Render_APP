@@ -36,19 +36,33 @@
                         </template>
                     </v-checkbox>
 
-                    <v-text-field :disabled="!applyYarnCard" label="Yarn Crossing" type="number" outlined
-                        dense></v-text-field>
+                    <v-text-field :disabled="!applyYarnCard" v-model="yarnCrossing" label="Yarn Crossing" type="number"
+                        outlined dense></v-text-field>
+
+                    <div class="tw-mt-4 tw-flex tw-justify-end" v-if="applyYarnCard && yarnCrossing > 0">
+                        <v-btn color="primary" @click="showMaterialPreview" :loading="isLoading">
+                            Generate Material
+                        </v-btn>
+                    </div>
                 </div>
             </v-form>
         </div>
 
         <div class="tw-flex-1 tw-bg-white tw-rounded-lg tw-p-4 tw-h-96" v-if="showYarn && !applyYarnCard">
-            <CreateYarn :form="yarnForm"/>
+            <CreateYarn :form="yarnForm" />
         </div>
         <div class="tw-flex-1 tw-bg-white tw-rounded-lg tw-p-4 tw-h-96" v-if="showYarn && applyYarnCard">
-            <CreateYarn :form="yarnForm" :showCard="applyYarnCard"/>
+            <CreateYarn :form="yarnForm" :showCard="applyYarnCard" />
         </div>
-
+        <div class="tw-flex-1 tw-bg-white tw-rounded-lg tw-p-4 tw-h-96" v-if="showComposeFabric && !applyYarnCard">
+            <CompositeYarn :fabrics="composeFabricForm" :compositeTwist="compositeTwist" />
+        </div>
+        <div class="tw-flex-1 tw-bg-white tw-rounded-lg tw-p-4 tw-h-96" v-if="showComposeFabric && applyYarnCard">
+            <CompositeYarn :fabrics="composeFabricForm" :compositeTwist="compositeTwist" :showCard="applyYarnCard" />
+        </div>
+        <div class="tw-flex-1 tw-bg-white tw-rounded-lg tw-p-4 tw-h-96" v-if="materialPreview">
+            <MaterialSimulator :fabrics="previewData" :crossings="yarnCrossing" />
+        </div>
     </div>
 
 </template>
@@ -58,6 +72,8 @@ import { getYarns } from '@/api/yarns';
 import { getComposeFabrics } from '@/api/compose-fabrics';
 import { useLoader } from '@/composables/useLoader';
 import CreateYarn from '../Yarns/CreateYarn.vue';
+import CompositeYarn from '../Yarns/CompositeYarn.vue';
+import MaterialSimulator from './MaterialSimulator.vue';
 
 const type = ref<'yarn' | 'compose'>('yarn');
 
@@ -69,7 +85,19 @@ interface Props {
 }
 
 const showYarn = ref<boolean>(false);
+const showComposeFabric = ref<boolean>(false);
 const yarnForm = ref<any>(null);
+const composeFabricForm = ref<any[]>([]);
+const compositeTwist = ref<number>(0);
+
+const previewData = computed(() => {
+    if (type.value === 'yarn' && yarnForm.value) {
+        return [yarnForm.value];
+    } else if (type.value === 'compose') {
+        return composeFabricForm.value;
+    }
+    return [];
+});
 
 const yarns = ref<any[]>([]);
 const composeFabrics = ref<any[]>([]);
@@ -77,6 +105,26 @@ const composeFabrics = ref<any[]>([]);
 const selectedYarn = ref<number | null>(null);
 const selectedComposeFabric = ref<number | null>(null);
 const applyYarnCard = ref<boolean>(false);
+const yarnCrossing = ref<number>(0);
+const showGenerateButton = ref<boolean>(false);
+
+watch(() => yarnCrossing.value, (newVal) => {
+    if (newVal > 0) {
+        showGenerateButton.value = true;
+    }
+});
+
+const materialPreview = ref<boolean>(false);
+
+const showMaterialPreview = () => {
+    if ((type.value === 'yarn' && !selectedYarn.value) ||
+        (type.value === 'compose' && !selectedComposeFabric.value)) {
+        return;
+    }
+    materialPreview.value = true;
+    showYarn.value = false;
+    showComposeFabric.value = false;
+};
 
 const props = defineProps<Props>();
 const emit = defineEmits(['update:showForm']);
@@ -143,7 +191,7 @@ const init = async () => {
 
 watch(() => selectedYarn.value, (newVal) => {
     showYarn.value = true;
-    if (showYarn.value) {
+    if (selectedYarn.value) {
         const yarn = yarns.value.find(y => y.id === newVal);
         yarnForm.value = {
             name: yarn?.name,
@@ -158,8 +206,28 @@ watch(() => selectedYarn.value, (newVal) => {
         console.log('yarnForm', yarnForm)
     }
 });
-watch(() => applyYarnCard.value, (newVal) => {
-    console.log('applyYarnCard', newVal)
+
+watch(() => selectedComposeFabric.value, (newVal) => {
+    showComposeFabric.value = true;
+    if (selectedComposeFabric.value) {
+        const composeFabric = composeFabrics.value.find(cf => cf.id == newVal);
+
+        for (const yarn of composeFabric.yarns) {
+            composeFabricForm.value.push({
+                name: yarn?.name,
+                numberOfStrings: yarn.strings[0].number,
+                colors: yarn.strings[0].colors.map(({ code, percentage }: { code: string; percentage: number }) => ({
+                    color: code,
+                    percentage
+                })),
+                twist: yarn.twist,
+                chaos: yarn.chaos,
+            });
+        }
+        compositeTwist.value = composeFabric.twist;
+    }
+    console.log('composeFabricForm', composeFabricForm.value)
+    console.log('compositeTwist', compositeTwist.value)
 })
 
 onMounted(init);

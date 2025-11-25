@@ -88,8 +88,8 @@ const createFibers = () => {
     } else {
         materiais.push(new THREE.MeshStandardMaterial({
             color: new THREE.Color('#FFFFFF'),
-            roughness: 0.5,
-            metalness: 0.1,
+            roughness: 0.8,
+            metalness: 0.01,
         }));
         pesosAcumulados.push(1.0);
     }

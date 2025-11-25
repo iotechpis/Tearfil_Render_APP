@@ -22,6 +22,7 @@ interface YarnFormData {
 interface Props {
     fabrics: YarnFormData[];
     compositeTwist: number;
+    showCard?: boolean;
 }
 const props = defineProps<Props>();
 
@@ -39,6 +40,8 @@ const fiberLength = 160
 const yarnBundleRadius = 0.3
 
 const compositeTwistTurns = props.compositeTwist;
+
+const cardSpacing = 2.0
 
 const createCompositeYarn = () => {
 
@@ -60,127 +63,141 @@ const createCompositeYarn = () => {
         return;
     }
 
-    for (let i = 0; i < numYarns; i++) {
-        const yarnData = props.fabrics[i];
+    const numRows = props.showCard ? 6 : 1;
 
-        const yarnTwist = yarnData.twist;
-        const yarnChaos = yarnData.chaos;
-        const yarnFiberCount = yarnData.numberOfStrings;
+    for (let row = 0; row < numRows; row++) {
+        const rowGroup = new THREE.Group();
 
-        const yarnMateriais: THREE.MeshStandardMaterial[] = [];
-        const yarnPesosAcumulados: number[] = [];
-        let yarnPesoAcumulado = 0.0;
+        let yPos = 0;
+        if (numRows > 1) {
+            const centerIndex = (numRows - 1) / 2;
+            yPos = (row - centerIndex) * cardSpacing;
+        }
 
-        const inputColors = yarnData.colors; 
+        rowGroup.position.y = yPos;
 
-        if (inputColors && inputColors.length > 0) {
-            const percentagemTotal = inputColors.reduce((acc, c) => acc + (c.percentage || 0), 0);
+        for (let i = 0; i < numYarns; i++) {
+            const yarnData = props.fabrics[i];
 
-            const usarPesosIguais = percentagemTotal === 0;
+            const yarnTwist = yarnData.twist;
+            const yarnChaos = yarnData.chaos;
+            const yarnFiberCount = yarnData.numberOfStrings;
 
-            for (const cor of inputColors) {
+            const yarnMateriais: THREE.MeshStandardMaterial[] = [];
+            const yarnPesosAcumulados: number[] = [];
+            let yarnPesoAcumulado = 0.0;
+
+            const inputColors = yarnData.colors;
+
+            if (inputColors && inputColors.length > 0) {
+                const percentagemTotal = inputColors.reduce((acc, c) => acc + (c.percentage || 0), 0);
+
+                const usarPesosIguais = percentagemTotal === 0;
+
+                for (const cor of inputColors) {
+                    const material = new THREE.MeshStandardMaterial({
+                        color: new THREE.Color(cor.color || '#FFFFFF'),
+                        roughness: 0.5,
+                        metalness: 0.1,
+                    });
+                    yarnMateriais.push(material);
+                    materials.push(material);
+
+                    const peso = usarPesosIguais
+                        ? (1.0 / inputColors.length)
+                        : ((cor.percentage || 0) / percentagemTotal);
+
+                    yarnPesoAcumulado += peso;
+                    yarnPesosAcumulados.push(yarnPesoAcumulado);
+                }
+            } else {
                 const material = new THREE.MeshStandardMaterial({
-                    color: new THREE.Color(cor.color || '#FFFFFF'),
+                    color: new THREE.Color('#FFFFFF'),
                     roughness: 0.5,
                     metalness: 0.1,
                 });
                 yarnMateriais.push(material);
                 materials.push(material);
-
-                const peso = usarPesosIguais
-                    ? (1.0 / inputColors.length)
-                    : ((cor.percentage || 0) / percentagemTotal);
-
-                yarnPesoAcumulado += peso;
-                yarnPesosAcumulados.push(yarnPesoAcumulado);
+                yarnPesosAcumulados.push(1.0);
             }
-        } else {
-            const material = new THREE.MeshStandardMaterial({
-                color: new THREE.Color('#FFFFFF'),
-                roughness: 0.5,
-                metalness: 0.1,
-            });
-            yarnMateriais.push(material);
-            materials.push(material);
-            yarnPesosAcumulados.push(1.0);
-        }
 
-        let effectiveCompositeRadius: number;
-        const yarnAngleOffset = (i / numYarns) * Math.PI * 2;
-        if (numYarns === 1) {
-            effectiveCompositeRadius = 0;
-        } else if (numYarns === 2) {
-            effectiveCompositeRadius = yarnBundleRadius;
-        } else {
-            const R = yarnBundleRadius;
-            const N = numYarns;
-            const angle = Math.PI / N;
+            let effectiveCompositeRadius: number;
+            const yarnAngleOffset = (i / numYarns) * Math.PI * 2;
+            if (numYarns === 1) {
+                effectiveCompositeRadius = 0;
+            } else if (numYarns === 2) {
+                effectiveCompositeRadius = yarnBundleRadius;
+            } else {
+                const R = yarnBundleRadius;
+                const N = numYarns;
+                const angle = Math.PI / N;
 
-            effectiveCompositeRadius = R / Math.sin(angle);
-        }
+                effectiveCompositeRadius = R / Math.sin(angle);
+            }
 
-        const yarnCenterOffsetVector = new THREE.Vector3(
-            0,
-            effectiveCompositeRadius * Math.cos(yarnAngleOffset),
-            effectiveCompositeRadius * Math.sin(yarnAngleOffset)
-        );
-
-        for (let j = 0; j < yarnFiberCount; j++) {
-
-            const fiberAngle = Math.random() * Math.PI * 2;
-            const fiberLocalRadius = yarnBundleRadius * Math.sqrt(Math.random());
-            const fiberOffsetVector = new THREE.Vector3(
+            const yarnCenterOffsetVector = new THREE.Vector3(
                 0,
-                fiberLocalRadius * Math.cos(fiberAngle),
-                fiberLocalRadius * Math.sin(fiberAngle)
+                effectiveCompositeRadius * Math.cos(yarnAngleOffset),
+                effectiveCompositeRadius * Math.sin(yarnAngleOffset)
             );
 
-            const curvePoints: THREE.Vector3[] = [];
-            const segments = 100;
-            for (let k = 0; k <= segments; k++) {
-                const t = k / segments;
-                const x = (t - 0.5) * fiberLength;
+            for (let j = 0; j < yarnFiberCount; j++) {
 
-                const innerTwistAngle = t * yarnTwist * Math.PI * 2;
-                const rotatedFiberOffset = new THREE.Vector3();
-                rotatedFiberOffset.y = fiberOffsetVector.y * Math.cos(innerTwistAngle) - fiberOffsetVector.z * Math.sin(innerTwistAngle);
-                rotatedFiberOffset.z = fiberOffsetVector.y * Math.sin(innerTwistAngle) + fiberOffsetVector.z * Math.cos(innerTwistAngle);
+                const fiberAngle = Math.random() * Math.PI * 2;
+                const fiberLocalRadius = yarnBundleRadius * Math.sqrt(Math.random());
+                const fiberOffsetVector = new THREE.Vector3(
+                    0,
+                    fiberLocalRadius * Math.cos(fiberAngle),
+                    fiberLocalRadius * Math.sin(fiberAngle)
+                );
 
-                const outerTwistAngle = t * compositeTwistTurns * Math.PI * 2;
-                const rotatedYarnCenter = new THREE.Vector3();
-                rotatedYarnCenter.y = yarnCenterOffsetVector.y * Math.cos(outerTwistAngle) - yarnCenterOffsetVector.z * Math.sin(outerTwistAngle);
-                rotatedYarnCenter.z = yarnCenterOffsetVector.y * Math.sin(outerTwistAngle) + yarnCenterOffsetVector.z * Math.cos(outerTwistAngle);
+                const curvePoints: THREE.Vector3[] = [];
+                const segments = 100;
+                for (let k = 0; k <= segments; k++) {
+                    const t = k / segments;
+                    const x = (t - 0.5) * fiberLength;
 
-                rotatedFiberOffset.y += (Math.random() - 0.5) * yarnChaos * 0.05;
-                rotatedFiberOffset.z += (Math.random() - 0.5) * yarnChaos * 0.05;
+                    const innerTwistAngle = t * yarnTwist * Math.PI * 2;
+                    const rotatedFiberOffset = new THREE.Vector3();
+                    rotatedFiberOffset.y = fiberOffsetVector.y * Math.cos(innerTwistAngle) - fiberOffsetVector.z * Math.sin(innerTwistAngle);
+                    rotatedFiberOffset.z = fiberOffsetVector.y * Math.sin(innerTwistAngle) + fiberOffsetVector.z * Math.cos(innerTwistAngle);
 
-                const finalPoint = new THREE.Vector3(x, 0, 0);
-                finalPoint.add(rotatedYarnCenter);
-                finalPoint.add(rotatedFiberOffset);
+                    const outerTwistAngle = t * compositeTwistTurns * Math.PI * 2;
+                    const rotatedYarnCenter = new THREE.Vector3();
+                    rotatedYarnCenter.y = yarnCenterOffsetVector.y * Math.cos(outerTwistAngle) - yarnCenterOffsetVector.z * Math.sin(outerTwistAngle);
+                    rotatedYarnCenter.z = yarnCenterOffsetVector.y * Math.sin(outerTwistAngle) + yarnCenterOffsetVector.z * Math.cos(outerTwistAngle);
 
-                curvePoints.push(finalPoint);
-            }
+                    rotatedFiberOffset.y += (Math.random() - 0.5) * yarnChaos * 0.05;
+                    rotatedFiberOffset.z += (Math.random() - 0.5) * yarnChaos * 0.05;
 
-            const curve = new THREE.CatmullRomCurve3(curvePoints);
-            const geometry = new THREE.TubeGeometry(curve, segments, fiberRadius, 8, false);
+                    const finalPoint = new THREE.Vector3(x, 0, 0);
+                    finalPoint.add(rotatedYarnCenter);
+                    finalPoint.add(rotatedFiberOffset);
 
-            const rand = Math.random();
-
-            let materialSelecionado = yarnMateriais[yarnMateriais.length - 1];
-
-            for (let k = 0; k < yarnPesosAcumulados.length; k++) {
-                if (rand < yarnPesosAcumulados[k]) {
-                    materialSelecionado = yarnMateriais[k];
-                    break;
+                    curvePoints.push(finalPoint);
                 }
+
+                const curve = new THREE.CatmullRomCurve3(curvePoints);
+                const geometry = new THREE.TubeGeometry(curve, segments, fiberRadius, 8, false);
+
+                const rand = Math.random();
+
+                let materialSelecionado = yarnMateriais[yarnMateriais.length - 1];
+
+                for (let k = 0; k < yarnPesosAcumulados.length; k++) {
+                    if (rand < yarnPesosAcumulados[k]) {
+                        materialSelecionado = yarnMateriais[k];
+                        break;
+                    }
+                }
+
+                const mesh = new THREE.Mesh(geometry, materialSelecionado);
+
+                rowGroup.add(mesh);
             }
-
-            const mesh = new THREE.Mesh(geometry, materialSelecionado);
-
-            compositeGroup.add(mesh);
         }
+        compositeGroup.add(rowGroup);
     }
-
     scene.add(compositeGroup);
 }
 
@@ -193,7 +210,7 @@ const initScene = () => {
     const width = container.value.clientWidth;
     const height = container.value.clientHeight;
     camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 1000);
-    camera.position.set(2, 2, 2);
+    camera.position.set(0.228, -9.949, 34.064)
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);

@@ -27,6 +27,7 @@
                 { title: 'Date', value: 'createdAt' },
                 { title: 'Production', value: 'production' },
                 { title: '', value: 'actions' },
+                { title: '', value: 'render' },
             ]">
                 <template #item.createdAt="{ item }">
                     {{ new Date((item as Yarn).createdAt).toLocaleDateString().split('T')[0] }}
@@ -35,6 +36,11 @@
                 <template #item.actions="{ item }">
                     <v-btn color="primary" size="small"
                         @click="handleViewItem(item, 'single')"><v-icon>mdi-eye</v-icon></v-btn>
+                </template>
+
+                <template #item.render="{ item }">
+                    <v-btn color="secondary" size="small"
+                        @click="showRenderBar(item)"><v-icon>mdi-cone</v-icon></v-btn>
                 </template>
 
                 <template #item.production="{ item }">
@@ -93,6 +99,15 @@
         <YarnModelForm :type="formType" :showForm="showForm" @update:showForm="showForm = $event"
             :initialData="selectedItem" :isViewOnly="isViewOnly" />
     </div>
+
+    <v-navigation-drawer v-if="showRender" location="right" permanent width="700" v-model="showRender" clearable>
+        <div>
+            <v-btn icon @click="showRender = false">
+                <v-icon>mdi-close</v-icon>
+            </v-btn>
+        </div>
+        <YarnCone v-if="type === 'single'" :form="dataYarn" />
+    </v-navigation-drawer>
 </template>
 
 <script lang="ts" setup>
@@ -100,6 +115,7 @@ import { getYarns } from '@/api/yarns';
 import { getComposeFabrics } from '@/api/compose-fabrics';
 import { useLoader } from '@/composables/useLoader';
 import YarnModelForm from './YarnModelForm.vue';
+import YarnCone from './YarnCone.vue';
 
 const showForm = ref(false);
 
@@ -113,6 +129,40 @@ const expandedItems = ref<Array<string>>([]);
 const selectedItem = ref<Yarn | ComposeFabric | null>(null);
 const isViewOnly = ref(false);
 const formType = ref<'single' | 'compose'>('single');
+
+const showRender = ref<boolean>(false);
+
+const dataYarn = ref<any>(null);
+const dataCompose = ref<any>(null);
+
+const showRenderBar = (yarn: any) => {
+    showRender.value = !showRender.value;
+    if (type.value === 'single') {
+        dataYarn.value = {
+            name: yarn?.name,
+            numberOfStrings: yarn.strings[0].number,
+            colors: yarn.strings[0].colors.map(({ code, percentage }: { code: string; percentage: number }) => ({
+                color: code,
+                percentage
+            })),
+            twist: yarn.twist,
+            chaos: yarn.chaos,
+        };
+    } else {
+        for (const y of yarn.yarns) {
+            dataCompose.value.push({
+                name: y?.name,
+                numberOfStrings: y.strings[0].number,
+                colors: y.strings[0].colors.map(({ code, percentage }: { code: string; percentage: number }) => ({
+                    color: code,
+                    percentage
+                })),
+                twist: y.twist,
+                chaos: y.chaos,
+            });
+        }
+    }
+};
 
 interface Yarn {
     id: string;
