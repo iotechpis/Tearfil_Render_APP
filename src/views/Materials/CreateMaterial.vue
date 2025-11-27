@@ -203,7 +203,6 @@ watch(() => selectedYarn.value, (newVal) => {
             twist: yarn.twist,
             chaos: yarn.chaos,
         }
-        console.log('yarnForm', yarnForm)
     }
 });
 
@@ -226,8 +225,6 @@ watch(() => selectedComposeFabric.value, (newVal) => {
         }
         compositeTwist.value = composeFabric.twist;
     }
-    console.log('composeFabricForm', composeFabricForm.value)
-    console.log('compositeTwist', compositeTwist.value)
 })
 
 onMounted(init);
